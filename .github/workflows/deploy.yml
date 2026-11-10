@@ -1,0 +1,87 @@
+name: 构建并发布知识库
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出知识库
+        uses: actions/checkout@v4
+
+      - name: 准备 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 第一道：结构与链接。error 直接失败；warn 只记录，不阻断发布
+      # （staging 停留超期之类的问题不该拦住站点更新）。
+      - name: 结构检查
+        run: python 90_Meta/scripts/kb.py lint
+
+      # 第二道：白名单生成发布面。只收 confirmed 卡片 / confirmed 专题 / active MOC。
+      - name: 生成发布面
+        run: python 90_Meta/scripts/kb.py publish --out .publish
+
+      # 第三道：泄漏守卫。产物里出现内部目录、内部 ID、内部字段即失败。
+      - name: 泄漏守卫
+        run: python 90_Meta/scripts/kb.py guard --dir .publish
+
+      - name: 读取 Pages 地址
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: 检出 Quartz 框架
+        uses: actions/checkout@v4
+        with:
+          repository: jackyzha0/quartz
+          ref: v4.4.0
+          path: .quartz
+
+      - name: 准备 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 安装 Quartz 依赖
+        working-directory: .quartz
+        run: npm ci
+
+      - name: 写入站点配置
+        run: |
+          cp site/quartz.config.ts .quartz/quartz.config.ts
+          cp site/quartz.layout.ts .quartz/quartz.layout.ts
+
+      - name: 构建站点
+        working-directory: .quartz
+        env:
+          QUARTZ_BASE_URL: ${{ steps.pages.outputs.base_url }}
+        run: npx quartz build -d "$GITHUB_WORKSPACE/.publish" -o "$GITHUB_WORKSPACE/public"
+
+      - name: 上传 Pages 产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 部署到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,15 @@
+.publish/
+.quartz/
+public/
+node_modules/
+.npm-cache/
+90_Meta/state/
+.tmp/
+__pycache__/
+*.pyc
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+.DS_Store
+Thumbs.db
+desktop.ini

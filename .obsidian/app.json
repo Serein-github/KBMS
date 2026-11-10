@@ -1,0 +1,16 @@
+{
+  "attachmentFolderPath": "10_Raw/assets",
+  "newLinkFormat": "absolute",
+  "useMarkdownLinks": false,
+  "alwaysUpdateLinks": true,
+  "showUnsupportedFiles": true,
+  "promptDelete": true,
+  "trashOption": "local",
+  "userIgnoreFilters": [
+    ".publish/",
+    ".github/",
+    "public/",
+    "site/",
+    "90_Meta/state/"
+  ]
+}
