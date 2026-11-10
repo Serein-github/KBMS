@@ -25,5 +25,9 @@
   "workspaces": false,
   "markdown-importer": false,
   "zk-prefixer": false,
-  "webviewer": false
+  "webviewer": false,
+  "footnotes": false,
+  "slash-command": false,
+  "publish": false,
+  "sync": true
 }
